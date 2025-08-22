@@ -14,6 +14,9 @@ Future<void> main() async {
 
   // Just pass created session data.
   final bsky = Bluesky.fromSession(session.data);
+
+  final timeline = await bsky.feed.getTimeline();
+  print(timeline);
 }
 
 final pwController = TextEditingController();
@@ -57,7 +60,7 @@ class _LoginPageState extends State<LoginPage> {
         );
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
+          MaterialPageRoute(builder: (context) => HomePage(bsky: bsky)),
         );
       }
     } catch (e) {
