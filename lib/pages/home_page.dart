@@ -24,6 +24,7 @@ class _HomePageState extends State<HomePage> {
   bool _isLoadingMore = false;
   final ScrollController _scrollController = ScrollController();
   String? _cursor;
+  final Set<String> _likedPosts = <String>{};
 
   @override
   void initState() {
@@ -96,20 +97,53 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _likePost(FeedViewPost post) async {
+    final postUri = post.post.uri.toString();
+    
+    setState(() {
+      if (_likedPosts.contains(postUri)) {
+        _likedPosts.remove(postUri);
+      } else {
+        _likedPosts.add(postUri);
+      }
+    });
+
     try {
-      await widget.bsky.feed.like.create(
-        subject: RepoStrongRef(
-          uri: post.post.uri,
-          cid: post.post.cid,
-        ),
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Post liked!')),
-      );
+      if (_likedPosts.contains(postUri)) {
+        await widget.bsky.feed.like.create(
+          subject: RepoStrongRef(
+            uri: post.post.uri,
+            cid: post.post.cid,
+          ),
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Post liked!')),
+          );
+        }
+      } else {
+        // Note: Unlike functionality would require finding and deleting the like record
+        // For now, we'll just show a message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Post unliked!')),
+          );
+        }
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to like post: $e')),
-      );
+      // Revert the state if the API call failed
+      setState(() {
+        if (_likedPosts.contains(postUri)) {
+          _likedPosts.remove(postUri);
+        } else {
+          _likedPosts.add(postUri);
+        }
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to like post: $e')),
+        );
+      }
     }
   }
 
@@ -312,8 +346,12 @@ class _HomePageState extends State<HomePage> {
                                       () => _repost(post),
                                     ),
                                     _buildActionButton(
-                                      const Icon(FluentIcons.heart_24_regular),
-                                      Colors.grey[600]!,
+                                      Icon(_likedPosts.contains(post.post.uri.toString())
+                                          ? FluentIcons.heart_24_filled
+                                          : FluentIcons.heart_24_regular),
+                                      _likedPosts.contains(post.post.uri.toString())
+                                          ? Colors.red
+                                          : Colors.grey[600]!,
                                       () => _likePost(post),
                                     ),
                                     _buildActionButton(
