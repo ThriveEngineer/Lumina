@@ -154,6 +154,21 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Widget _buildActionButton(IconData icon, Color color, VoidCallback onPressed) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Icon(
+          icon,
+          color: color,
+          size: 20,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -191,7 +206,7 @@ class _HomePageState extends State<HomePage> {
                       child: Padding(
                         padding: EdgeInsets.all(16.0),
                         child: CircularProgressIndicator(
-                          color: Color.fromARGB(255, 29, 133, 218),
+                          color: Color.fromARGB(255, 0, 0, 0),
                         ),
                       ),
                     );
@@ -202,18 +217,28 @@ class _HomePageState extends State<HomePage> {
                   final timestamp = DateTime.parse(post.post.indexedAt.toString());
 
                   return Container(
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: Color.fromARGB(255, 50, 50, 50),
-                          width: 0.5,
-                        ),
+                    margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color.fromARGB(255, 151, 151, 151),
+                        width: 0.2,
                       ),
+                      color: Colors.white/*const Color.fromARGB(255, 249, 248, 247)*/,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.07),
+                          spreadRadius: 8,
+                          blurRadius: 5,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                               Row(
                                 children: [
@@ -240,7 +265,7 @@ class _HomePageState extends State<HomePage> {
                                         Text(
                                           post.post.author.displayName ?? post.post.author.handle,
                                           style: const TextStyle(
-                                            color: Colors.white,
+                                            color: Colors.black,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -267,43 +292,40 @@ class _HomePageState extends State<HomePage> {
                               Text(
                                 FeedPostRecord.fromJson(record as Map<String, dynamic>).text ?? '',
                                 style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
+                                  color: Colors.black,
+                                  fontSize: 15,
+                                  height: 1.4,
                                 ),
+                                maxLines: null,
                               ),
                               const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(
+                              Container(
+                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    _buildActionButton(
                                       Icons.chat_bubble_outline,
-                                      color: Colors.grey,
+                                      Colors.grey[600]!,
+                                      () {},
                                     ),
-                                    onPressed: () {},
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(
+                                    _buildActionButton(
                                       Icons.repeat,
-                                      color: Colors.grey,
+                                      Colors.grey[600]!,
+                                      () => _repost(post),
                                     ),
-                                    onPressed: () => _repost(post),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(
+                                    _buildActionButton(
                                       Icons.favorite_border,
-                                      color: Colors.grey,
+                                      Colors.grey[600]!,
+                                      () => _likePost(post),
                                     ),
-                                    onPressed: () => _likePost(post),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(
+                                    _buildActionButton(
                                       Icons.share_outlined,
-                                      color: Colors.grey,
+                                      Colors.grey[600]!,
+                                      () {},
                                     ),
-                                    onPressed: () {},
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ],
                           ),
