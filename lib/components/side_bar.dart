@@ -25,11 +25,11 @@ class SideBar extends StatelessWidget {
         // Feed button with conditional navigation
         SizedBox(height: 11,),
         Padding(
-          padding: const EdgeInsets.only(left: 10),
+          padding: const EdgeInsets.only(left: 20),
           child: InkWell(
             onTap: () {
               // Only navigate if we're not already on FeedPage
-              if (currentPage != 'feed') {
+              if (currentPage != 'home') {
                 // This assumes you've stored the BlueskyService somewhere accessible
                 // You might need to adjust this based on your app's structure
               }
@@ -37,17 +37,17 @@ class SideBar extends StatelessWidget {
             child: Row(children: [
               Icon(
                 FluentIcons.broad_activity_feed_16_regular, 
-                color: currentPage == 'feed' 
+                color: currentPage == 'home' 
                   ? Colors.black 
                   : Color.fromRGBO(145, 145, 142, 1.0),
               ),
               SizedBox(width: 8,),
               Text(
-                "Feed", 
+                "Home", 
                 style: TextStyle(
-                  fontWeight: currentPage == 'feed' ? FontWeight.bold : FontWeight.w500, 
+                  fontWeight: currentPage == 'home' ? FontWeight.bold : FontWeight.w500, 
                   fontSize: 14, 
-                  color: currentPage == 'feed' 
+                  color: currentPage == 'home' 
                     ? Colors.black 
                     : Color.fromRGBO(95, 94, 91, 1.0)
                 ),
@@ -58,7 +58,7 @@ class SideBar extends StatelessWidget {
         // Search button
         SizedBox(height: 11),
                       Padding(
-                        padding: const EdgeInsets.only(left: 10),
+                        padding: const EdgeInsets.only(left: 20),
                         child: Row(children: [
                           Icon(FluentIcons.search_16_regular, color: Color.fromRGBO(145, 145, 142, 1.0),),
                           SizedBox(width: 8,),
@@ -69,7 +69,7 @@ class SideBar extends StatelessWidget {
                       SizedBox(height: 11,),
 
                       Padding(
-                        padding: const EdgeInsets.only(left: 10),
+                        padding: const EdgeInsets.only(left: 20),
                         child: Row(children: [
                           Icon(FluentIcons.alert_16_regular, color: Color.fromRGBO(145, 145, 142, 1.0),),
                           SizedBox(width: 8,),
@@ -80,7 +80,7 @@ class SideBar extends StatelessWidget {
                       SizedBox(height: 11,),
 
                       Padding(
-                        padding: const EdgeInsets.only(left: 10),
+                        padding: const EdgeInsets.only(left: 20),
                         child: Row(children: [
                           Icon(FluentIcons.mail_inbox_16_regular, color: Color.fromRGBO(145, 145, 142, 1.0),),
                           SizedBox(width: 8,),
@@ -91,7 +91,7 @@ class SideBar extends StatelessWidget {
                       SizedBox(height: 11,),
 
                       Padding(
-                        padding: const EdgeInsets.only(left: 10),
+                        padding: const EdgeInsets.only(left: 20),
                         child: Row(children: [
                           Icon(FluentIcons.broad_activity_feed_16_regular, color: Color.fromRGBO(145, 145, 142, 1.0),),
                           SizedBox(width: 8,),
@@ -102,7 +102,7 @@ class SideBar extends StatelessWidget {
                       SizedBox(height: 11,),
 
                       Padding(
-                        padding: const EdgeInsets.only(left: 10),
+                        padding: const EdgeInsets.only(left: 20),
                         child: Row(children: [
                           Icon(FluentIcons.apps_list_20_regular, color: Color.fromRGBO(145, 145, 142, 1.0), size: 24,),
                           SizedBox(width: 8,),
@@ -113,7 +113,7 @@ class SideBar extends StatelessWidget {
                       SizedBox(height: 11,),
 
                       Padding(
-                        padding: const EdgeInsets.only(left: 10),
+                        padding: const EdgeInsets.only(left: 20),
                         child: Row(children: [
                           Icon(FluentIcons.person_16_regular, color: Color.fromRGBO(145, 145, 142, 1.0), size: 24,),
                           SizedBox(width: 8,),
@@ -124,7 +124,7 @@ class SideBar extends StatelessWidget {
                       SizedBox(height: 11,),
 
                       Padding(
-                        padding: const EdgeInsets.only(left: 10),
+                        padding: const EdgeInsets.only(left: 20),
                         child: Row(children: [
                           Icon(FluentIcons.settings_16_regular, color: Color.fromRGBO(145, 145, 142, 1.0), size: 24,),
                           SizedBox(width: 8,),
@@ -135,7 +135,7 @@ class SideBar extends StatelessWidget {
                       SizedBox(height: 40,),
 
                       Padding(
-                        padding: const EdgeInsets.only(left: 10),
+                        padding: const EdgeInsets.only(left: 20),
                         child: Align(
                           alignment: Alignment.centerLeft,
                           child: InkWell(
