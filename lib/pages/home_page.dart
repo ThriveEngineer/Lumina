@@ -3,6 +3,7 @@ import 'package:bluesky/bluesky.dart';
 import 'package:bluesky/core.dart';
 import 'package:bluesky/app_bsky_feed_defs.dart';
 import 'package:bluesky/com_atproto_repo_strongref.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lumina/components/auth.dart';
@@ -154,17 +155,13 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Widget _buildActionButton(IconData icon, Color color, VoidCallback onPressed) {
+  Widget _buildActionButton(Icon icon, Color color, VoidCallback onPressed) {
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(20),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Icon(
-          icon,
-          color: color,
-          size: 20,
-        ),
+        child: icon,
       ),
     );
   }
@@ -305,22 +302,22 @@ class _HomePageState extends State<HomePage> {
                                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                   children: [
                                     _buildActionButton(
-                                      Icons.chat_bubble_outline,
+                                      const Icon(FluentIcons.arrow_reply_24_regular),
                                       Colors.grey[600]!,
                                       () {},
                                     ),
                                     _buildActionButton(
-                                      Icons.repeat,
+                                      const Icon(FluentIcons.arrow_repeat_all_24_regular),
                                       Colors.grey[600]!,
                                       () => _repost(post),
                                     ),
                                     _buildActionButton(
-                                      Icons.favorite_border,
+                                      const Icon(FluentIcons.heart_24_regular),
                                       Colors.grey[600]!,
                                       () => _likePost(post),
                                     ),
                                     _buildActionButton(
-                                      Icons.share_outlined,
+                                      const Icon(FluentIcons.share_24_regular),
                                       Colors.grey[600]!,
                                       () {},
                                     ),
