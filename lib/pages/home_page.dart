@@ -1,13 +1,13 @@
 import 'package:bluesky/app_bsky_feed_post.dart';
 import 'package:bluesky/bluesky.dart';
-import 'package:bluesky/core.dart';
-import 'package:bluesky/app_bsky_feed_defs.dart';
+import 'package:bluesky/app_bsky_feed_defs.dart' hide ReplyRef;
 import 'package:bluesky/com_atproto_repo_strongref.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lumina/components/auth.dart';
 import 'package:lumina/components/side_bar.dart';
+import 'package:lumina/pages/post_detail_page.dart';
 
 class HomePage extends StatefulWidget {
   final Bluesky bsky;
@@ -165,6 +165,156 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void _navigateToPostDetail(FeedViewPost postData) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PostDetailPage(
+          bsky: widget.bsky,
+          post: postData,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _replyToPost(FeedViewPost postData) async {
+    final TextEditingController replyController = TextEditingController();
+    
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: const Color(0xFFFAFAFA),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF37352F).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Icon(
+                      FluentIcons.arrow_reply_24_regular,
+                      size: 16,
+                      color: Color(0xFF37352F),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Reply to @${postData.post.author.handle}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF37352F),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFFE3E2E0)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: TextField(
+                  controller: replyController,
+                  decoration: const InputDecoration(
+                    hintText: 'Write your reply...',
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.all(16),
+                    hintStyle: TextStyle(color: Color(0xFF9B9A97)),
+                  ),
+                  maxLines: 4,
+                  autofocus: true,
+                  style: const TextStyle(
+                    color: Color(0xFF37352F),
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF6B6B6B),
+                    ),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context, replyController.text),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2F1B69),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    ),
+                    child: const Text('Reply'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (result != null && result.trim().isNotEmpty) {
+      try {
+        await widget.bsky.feed.post.create(
+          text: result.trim(),
+          reply: ReplyRef(
+            root: RepoStrongRef(
+              uri: postData.post.uri,
+              cid: postData.post.cid,
+            ),
+            parent: RepoStrongRef(
+              uri: postData.post.uri,
+              cid: postData.post.cid,
+            ),
+          ),
+        );
+        
+        // Reply posted successfully
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Reply posted!'),
+              backgroundColor: const Color(0xFF2F1B69),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to post reply: $e'),
+              backgroundColor: const Color(0xFFE03E3E),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            ),
+          );
+        }
+      }
+    }
+  }
+
   void _logout() {
     Navigator.pushReplacement(
       context,
@@ -189,184 +339,270 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Widget _buildActionButton(Icon icon, Color color, VoidCallback onPressed) {
+  Widget _buildNotionActionButton(
+    IconData iconData, 
+    String label, 
+    VoidCallback onPressed, {
+    bool isActive = false,
+    Color? activeColor,
+  }) {
+    final color = isActive 
+        ? (activeColor ?? const Color(0xFF2F1B69))
+        : const Color(0xFF9B9A97);
+    
     return InkWell(
       onTap: onPressed,
-      borderRadius: BorderRadius.circular(20),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: icon,
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isActive 
+              ? (activeColor ?? const Color(0xFF2F1B69)).withOpacity(0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: isActive 
+                ? (activeColor ?? const Color(0xFF2F1B69)).withOpacity(0.2)
+                : Colors.transparent,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              iconData,
+              size: 14,
+              color: color,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: color,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFFFFFF),
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                color: Color.fromARGB(255, 29, 133, 218),
+                color: Color(0xFF2F1B69),
               ),
             )
           : Row(
               children: [
                 Container(
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 249, 248, 247),
-                    border: BorderDirectional(
-                      end: BorderSide(
-                      color: const Color.fromARGB(255, 151, 151, 151),
-                      width: 0.2,
-                    )
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFBFBFA),
+                    border: Border(
+                      right: BorderSide(
+                        color: Color(0xFFE3E2E0),
+                        width: 1,
+                      ),
                     ),
                   ),
-                  width: 235,
+                  width: 240,
                   child: const SideBar(),
-                  ),
+                ),
                 Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: _refreshTimeline,
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      itemCount: _posts.length + (_isLoadingMore ? 1 : 0),
-                      itemBuilder: (context, index) {
+                  child: Container(
+                    color: const Color(0xFFFFFFFF),
+                    child: RefreshIndicator(
+                      onRefresh: _refreshTimeline,
+                      color: const Color(0xFF2F1B69),
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        itemCount: _posts.length + (_isLoadingMore ? 1 : 0),
+                        itemBuilder: (context, index) {
                   if (index == _posts.length) {
                     return const Center(
                       child: Padding(
-                        padding: EdgeInsets.all(16.0),
+                        padding: EdgeInsets.all(20.0),
                         child: CircularProgressIndicator(
-                          color: Color.fromARGB(255, 0, 0, 0),
+                          color: Color(0xFF2F1B69),
+                          strokeWidth: 2,
                         ),
                       ),
                     );
                   }
 
-                  final post = _posts[index];
-                  final record = post.post.record;
-                  final timestamp = DateTime.parse(post.post.indexedAt.toString());
+                  final feedPost = _posts[index];
+                  final record = feedPost.post.record;
+                  final timestamp = DateTime.parse(feedPost.post.indexedAt.toString());
 
-                  return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color.fromARGB(255, 151, 151, 151),
-                        width: 0.2,
-                      ),
-                      color: Colors.white/*const Color.fromARGB(255, 249, 248, 247)*/,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.07),
-                          spreadRadius: 8,
-                          blurRadius: 5,
-                          offset: const Offset(0, 1),
+                  return Column(
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(left: 64, right: 64, bottom: 16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: const Color(0xFFE3E2E0),
+                            width: 1,
+                          ),
+                          color: const Color(0xFFFFFFFF),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF37352F).withOpacity(0.04),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                              Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Main post content
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  CircleAvatar(
-                                    radius: 20,
-                                    backgroundImage: post.post.author.avatar != null
-                                        ? NetworkImage(post.post.author.avatar.toString())
-                                        : null,
-                                    backgroundColor: const Color.fromARGB(255, 29, 133, 218),
-                                    child: post.post.author.avatar == null
-                                        ? Text(
-                                            post.post.author.displayName?.isNotEmpty == true
-                                                ? post.post.author.displayName![0].toUpperCase()
-                                                : post.post.author.handle[0].toUpperCase(),
-                                            style: const TextStyle(color: Colors.white),
-                                          )
-                                        : null,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          post.post.author.displayName ?? post.post.author.handle,
-                                          style: const TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold,
+                                  // Author row
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 36,
+                                        height: 36,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: const Color(0xFFE3E2E0),
+                                            width: 1,
                                           ),
                                         ),
-                                        Text(
-                                          '@${post.post.author.handle}',
+                                        child: feedPost.post.author.avatar != null
+                                            ? ClipRRect(
+                                                borderRadius: BorderRadius.circular(7),
+                                                child: Image.network(
+                                                  feedPost.post.author.avatar.toString(),
+                                                  fit: BoxFit.cover,
+                                                ),
+                                              )
+                                            : Container(
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFF2F1B69),
+                                                  borderRadius: BorderRadius.circular(7),
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    feedPost.post.author.displayName?.isNotEmpty == true
+                                                        ? feedPost.post.author.displayName![0].toUpperCase()
+                                                        : feedPost.post.author.handle[0].toUpperCase(),
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontWeight: FontWeight.w600,
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              feedPost.post.author.displayName ?? feedPost.post.author.handle,
+                                              style: const TextStyle(
+                                                color: Color(0xFF37352F),
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            Text(
+                                              '@${feedPost.post.author.handle}',
+                                              style: const TextStyle(
+                                                color: Color(0xFF9B9A97),
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF37352F).withOpacity(0.05),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          _formatTimestamp(timestamp),
                                           style: const TextStyle(
-                                            color: Colors.grey,
-                                            fontSize: 14,
+                                            color: Color(0xFF9B9A97),
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w500,
                                           ),
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
+                                  const SizedBox(height: 16),
+                                  // Post content
                                   Text(
-                                    _formatTimestamp(timestamp),
+                                    FeedPostRecord.fromJson(record as Map<String, dynamic>).text ?? '',
                                     style: const TextStyle(
-                                      color: Colors.grey,
+                                      color: Color(0xFF37352F),
                                       fontSize: 14,
+                                      height: 1.5,
                                     ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  // Actions row
+                                  Row(
+                                    children: [
+                                      _buildNotionActionButton(
+                                        FluentIcons.arrow_reply_24_regular,
+                                        'Reply',
+                                        () => _replyToPost(feedPost),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      _buildNotionActionButton(
+                                        FluentIcons.comment_24_regular,
+                                        'View',
+                                        () => _navigateToPostDetail(feedPost),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      _buildNotionActionButton(
+                                        FluentIcons.arrow_repeat_all_24_regular,
+                                        'Repost',
+                                        () => _repost(feedPost),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      _buildNotionActionButton(
+                                        _likedPosts.contains(feedPost.post.uri.toString())
+                                            ? FluentIcons.heart_24_filled
+                                            : FluentIcons.heart_24_regular,
+                                        'Like',
+                                        () => _likePost(feedPost),
+                                        isActive: _likedPosts.contains(feedPost.post.uri.toString()),
+                                        activeColor: const Color(0xFFE03E3E),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
-                              Text(
-                                FeedPostRecord.fromJson(record as Map<String, dynamic>).text ?? '',
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 15,
-                                  height: 1.4,
-                                ),
-                                maxLines: null,
-                              ),
-                              const SizedBox(height: 12),
-                              Container(
-                                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    _buildActionButton(
-                                      const Icon(FluentIcons.arrow_reply_24_regular),
-                                      Colors.grey[600]!,
-                                      () {},
-                                    ),
-                                    _buildActionButton(
-                                      const Icon(FluentIcons.arrow_repeat_all_24_regular),
-                                      Colors.grey[600]!,
-                                      () => _repost(post),
-                                    ),
-                                    _buildActionButton(
-                                      Icon(_likedPosts.contains(post.post.uri.toString())
-                                          ? FluentIcons.heart_24_filled
-                                          : FluentIcons.heart_24_regular),
-                                      _likedPosts.contains(post.post.uri.toString())
-                                          ? Colors.red
-                                          : Colors.grey[600]!,
-                                      () => _likePost(post),
-                                    ),
-                                    _buildActionButton(
-                                      const Icon(FluentIcons.share_24_regular),
-                                      Colors.grey[600]!,
-                                      () {},
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      );
-                      },
+                      ),
+                    ],
+                  );
+                        },
+                      ),
                     ),
                   ),
                 ),
